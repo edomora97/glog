@@ -88,6 +88,10 @@ using std::perror;
 using std::fdopen;
 #endif
 
+#ifdef _WIN32
+#define fdopen _fdopen
+#endif
+
 // There is no thread annotation support.
 #define EXCLUSIVE_LOCKS_REQUIRED(mu)
 
@@ -572,7 +576,7 @@ inline void LogDestination::FlushLogFilesUnsafe(int min_severity) {
   // assume we have the log_mutex or we simply don't care
   // about it
   for (int i = min_severity; i < NUM_SEVERITIES; i++) {
-    LogDestination* log = log_destination(i);
+    LogDestination* log = log_destinations_[i];
     if (log != NULL) {
       // Flush the base fileobject_ logger directly instead of going
       // through any wrappers to reduce chance of deadlock.
@@ -821,6 +825,7 @@ void LogDestination::DeleteLogDestinations() {
   }
   MutexLock l(&sink_mutex_);
   delete sinks_;
+  sinks_ = NULL;
 }
 
 namespace {
