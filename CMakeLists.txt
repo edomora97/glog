@@ -8,6 +8,12 @@ if (POLICY CMP0063)
   cmake_policy (SET CMP0063 NEW)
 endif (POLICY CMP0063)
 
+include ("cmake/HunterGate.cmake")
+HunterGate (
+  URL "https://github.com/ruslo/hunter/archive/v0.19.18.tar.gz"
+  SHA1 "22b46b6d8c7645119c4dd5ed302eb387119f3283"
+)
+
 project (google-glog)
 
 enable_testing ()
@@ -49,6 +55,7 @@ include (DetermineGflagsNamespace)
 set (CMAKE_THREAD_PREFER_PTHREAD 1)
 
 if (WITH_GFLAGS)
+  hunter_add_package (gflags)
   find_package (gflags)
 
   if (gflags_FOUND)
@@ -398,7 +405,11 @@ endif (WIN32 AND HAVE_SNPRINTF)
 
 if (gflags_FOUND)
   target_include_directories (glog PUBLIC $<BUILD_INTERFACE:${gflags_INCLUDE_DIR}>)
-  target_link_libraries (glog PUBLIC ${gflags_LIBRARIES})
+  if (HUNTER_ENABLED)
+    target_link_libraries (glog PUBLIC gflags-static)
+  else (HUNTER_ENABLED)
+    target_link_libraries (glog PUBLIC ${gflags_LIBRARIES})
+  endif (HUNTER_ENABLED)
 
   if (NOT BUILD_SHARED_LIBS)
     # Don't use __declspec(dllexport|dllimport) if this is a static build
